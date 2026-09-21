@@ -8,6 +8,7 @@ import {
 } from './ensemble.js';
 import { PRESETS, DEFAULT_PRESET_ID, getPreset } from './presets.js';
 import { Trail, drawStage, drawChart } from './render.js';
+import { stageGeometry, pickBob, dragAngles } from './interaction.js';
 
 const $ = (id) => document.getElementById(id);
 const stage = $('stage');
@@ -49,6 +50,7 @@ const sim = {
   sinceLog: 0,
   paused: false,
   lastFrame: null,
+  drag: null, // { bob, resume } while a bob is being dragged
 };
 
 const deg = (d) => (d * Math.PI) / 180;
@@ -187,7 +189,57 @@ function frame(now) {
   }
 }
 
+function canvasPoint(ev) {
+  const rect = stage.getBoundingClientRect();
+  return {
+    x: ((ev.clientX - rect.left) / rect.width) * stage.width,
+    y: ((ev.clientY - rect.top) / rect.height) * stage.height,
+  };
+}
+
+function bindDragging() {
+  stage.addEventListener('pointerdown', (ev) => {
+    const { x, y } = canvasPoint(ev);
+    const g = stageGeometry(stage.width, stage.height, sim.states[0], sim.params);
+    const bob = pickBob(x, y, g);
+    if (!bob) return;
+    ev.preventDefault();
+    stage.setPointerCapture(ev.pointerId);
+    sim.drag = { bob, resume: !sim.paused };
+    setPaused(true);
+    stage.classList.add('dragging');
+  });
+
+  stage.addEventListener('pointermove', (ev) => {
+    if (!sim.drag) {
+      const { x, y } = canvasPoint(ev);
+      const g = stageGeometry(stage.width, stage.height, sim.states[0], sim.params);
+      stage.classList.toggle('grabbable', pickBob(x, y, g) !== 0);
+      return;
+    }
+    const { x, y } = canvasPoint(ev);
+    const g = stageGeometry(stage.width, stage.height, sim.states[0], sim.params);
+    const [t1, t2] = dragAngles(sim.drag.bob, x, y, sim.states[0], g);
+    controls.theta1.value = Math.round((t1 * 180) / Math.PI);
+    controls.theta2.value = Math.round((t2 * 180) / Math.PI);
+    updateOutputs();
+    release();
+  });
+
+  const finish = (ev) => {
+    if (!sim.drag) return;
+    const { resume } = sim.drag;
+    sim.drag = null;
+    stage.classList.remove('dragging');
+    if (stage.hasPointerCapture(ev.pointerId)) stage.releasePointerCapture(ev.pointerId);
+    if (resume) setPaused(false);
+  };
+  stage.addEventListener('pointerup', finish);
+  stage.addEventListener('pointercancel', finish);
+}
+
 function bind() {
+  bindDragging();
   for (const p of PRESETS) {
     const opt = document.createElement('option');
     opt.value = p.id;

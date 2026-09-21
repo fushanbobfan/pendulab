@@ -81,6 +81,15 @@ canvas {
 
 #stage {
   aspect-ratio: 4 / 3;
+  touch-action: none;
+}
+
+#stage.grabbable {
+  cursor: grab;
+}
+
+#stage.dragging {
+  cursor: grabbing;
 }
 
 canvas.chart {
