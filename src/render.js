@@ -76,12 +76,14 @@ export function chartGeometry(log, width, height, { floor = 1e-8, ceiling = 10, 
 
 /** Draw the pivot, rods, bobs and trails for every member of the ensemble. */
 export function drawStage(ctx, states, params, trails, options = {}) {
-  const { width, height } = ctx.canvas;
-  const { showTrails = true, showRods = true, bobRadius = 6 } = options;
+  const { showTrails = true, showRods = true, bobRadius = 6, pixelRatio = 1 } = options;
+  const width = ctx.canvas.width / pixelRatio;
+  const height = ctx.canvas.height / pixelRatio;
   const scale = fitScale(width, height, params.l1, params.l2);
   const ox = width / 2;
   const oy = height / 2;
 
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   ctx.clearRect(0, 0, width, height);
 
   if (showTrails) {
@@ -144,12 +146,15 @@ export function drawStage(ctx, states, params, trails, options = {}) {
 
 /** Draw the log-scale separation chart with decade gridlines. */
 export function drawChart(ctx, log, options = {}) {
-  const { width, height } = ctx.canvas;
+  const { pixelRatio = 1, ...geometry } = options;
+  const width = ctx.canvas.width / pixelRatio;
+  const height = ctx.canvas.height / pixelRatio;
   const pad = { left: 44, right: 8, top: 8, bottom: 20 };
   const w = width - pad.left - pad.right;
   const h = height - pad.top - pad.bottom;
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   ctx.clearRect(0, 0, width, height);
-  const { points, decades } = chartGeometry(log, w, h, options);
+  const { points, decades } = chartGeometry(log, w, h, geometry);
 
   ctx.strokeStyle = 'rgba(255,255,255,0.12)';
   ctx.fillStyle = 'rgba(255,255,255,0.55)';

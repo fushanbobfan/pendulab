@@ -41,6 +41,26 @@ const controls = {
   status: $('status'),
 };
 
+let pixelRatio = 1;
+
+/** Size a canvas's backing store to its CSS box times the device pixel ratio. */
+function fitCanvas(canvas) {
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width === 0) return false;
+  pixelRatio = Math.min(3, window.devicePixelRatio || 1);
+  const w = Math.round(rect.width * pixelRatio);
+  const h = Math.round(rect.height * pixelRatio);
+  if (canvas.width === w && canvas.height === h) return false;
+  canvas.width = w;
+  canvas.height = h;
+  return true;
+}
+
+/** Logical (CSS pixel) size of the stage, which the geometry helpers work in. */
+function stageSize() {
+  return { width: stage.width / pixelRatio, height: stage.height / pixelRatio };
+}
+
 const sim = {
   states: [],
   params: null,
@@ -155,8 +175,8 @@ function updateStatus() {
 }
 
 function draw() {
-  drawStage(ctx, sim.states, sim.params, sim.trails, { showTrails: controls.trails.checked });
-  drawChart(chartCtx, sim.log);
+  drawStage(ctx, sim.states, sim.params, sim.trails, { showTrails: controls.trails.checked, pixelRatio });
+  drawChart(chartCtx, sim.log, { pixelRatio });
 }
 
 let statusTimer = 0;
@@ -191,17 +211,22 @@ function frame(now) {
 
 function canvasPoint(ev) {
   const rect = stage.getBoundingClientRect();
+  const { width, height } = stageSize();
   return {
-    x: ((ev.clientX - rect.left) / rect.width) * stage.width,
-    y: ((ev.clientY - rect.top) / rect.height) * stage.height,
+    x: ((ev.clientX - rect.left) / rect.width) * width,
+    y: ((ev.clientY - rect.top) / rect.height) * height,
   };
+}
+
+function currentGeometry() {
+  const { width, height } = stageSize();
+  return stageGeometry(width, height, sim.states[0], sim.params);
 }
 
 function bindDragging() {
   stage.addEventListener('pointerdown', (ev) => {
     const { x, y } = canvasPoint(ev);
-    const g = stageGeometry(stage.width, stage.height, sim.states[0], sim.params);
-    const bob = pickBob(x, y, g);
+    const bob = pickBob(x, y, currentGeometry());
     if (!bob) return;
     ev.preventDefault();
     stage.setPointerCapture(ev.pointerId);
@@ -211,14 +236,12 @@ function bindDragging() {
   });
 
   stage.addEventListener('pointermove', (ev) => {
+    const { x, y } = canvasPoint(ev);
+    const g = currentGeometry();
     if (!sim.drag) {
-      const { x, y } = canvasPoint(ev);
-      const g = stageGeometry(stage.width, stage.height, sim.states[0], sim.params);
       stage.classList.toggle('grabbable', pickBob(x, y, g) !== 0);
       return;
     }
-    const { x, y } = canvasPoint(ev);
-    const g = stageGeometry(stage.width, stage.height, sim.states[0], sim.params);
     const [t1, t2] = dragAngles(sim.drag.bob, x, y, sim.states[0], g);
     controls.theta1.value = Math.round((t1 * 180) / Math.PI);
     controls.theta2.value = Math.round((t2 * 180) / Math.PI);
@@ -288,6 +311,14 @@ function bind() {
 }
 
 bind();
+fitCanvas(stage);
+fitCanvas(chart);
 applyPreset(DEFAULT_PRESET_ID);
+const observer = new ResizeObserver(() => {
+  const changed = fitCanvas(stage) | fitCanvas(chart);
+  if (changed && sim.params) draw();
+});
+observer.observe(stage);
+observer.observe(chart);
 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setPaused(true);
 requestAnimationFrame(frame);
