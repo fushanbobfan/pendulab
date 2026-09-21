@@ -38,6 +38,7 @@ const controls = {
   trails: $('trails'),
   pause: $('pause'),
   release: $('release'),
+  save: $('save'),
   status: $('status'),
 };
 
@@ -157,6 +158,23 @@ function stepPreset(delta) {
   const idx = PRESETS.findIndex((p) => p.id === controls.preset.value);
   const next = (idx + delta + PRESETS.length) % PRESETS.length;
   applyPreset(PRESETS[next].id);
+}
+
+/** Download the stage on an opaque background so the trails read on any viewer. */
+function saveImage() {
+  const out = document.createElement('canvas');
+  out.width = stage.width;
+  out.height = stage.height;
+  const octx = out.getContext('2d');
+  octx.fillStyle = '#070b14';
+  octx.fillRect(0, 0, out.width, out.height);
+  octx.drawImage(stage, 0, 0);
+  const a = document.createElement('a');
+  const t1 = controls.theta1.value;
+  const t2 = controls.theta2.value;
+  a.download = `pendulab-${controls.preset.value}-${t1}-${t2}-${sim.time.toFixed(1)}s.png`;
+  a.href = out.toDataURL('image/png');
+  a.click();
 }
 
 function updateStatus() {
@@ -282,6 +300,7 @@ function bind() {
   controls.trails.addEventListener('change', draw);
   controls.pause.addEventListener('click', () => setPaused(!sim.paused));
   controls.release.addEventListener('click', release);
+  controls.save.addEventListener('click', saveImage);
 
   document.addEventListener('keydown', (ev) => {
     if (ev.target instanceof HTMLElement && /^(input|select|textarea|button)$/i.test(ev.target.tagName)) return;
@@ -298,6 +317,10 @@ function bind() {
       case 'T':
         controls.trails.checked = !controls.trails.checked;
         draw();
+        break;
+      case 's':
+      case 'S':
+        saveImage();
         break;
       case '[':
         stepPreset(-1);
