@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pendulab</title>
+  <meta name="description" content="An interactive double-pendulum chaos lab: release a fan of nearly identical pendulums and watch tiny differences grow into completely different motion." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Pendulab</h1>
+    <p class="subtitle">A double-pendulum chaos lab. Release a fan of nearly identical pendulums and watch them disagree.</p>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="Pendulum stage">
+      <canvas id="stage" width="720" height="540" aria-label="Double pendulum animation">
+        Your browser does not support the canvas element.
+      </canvas>
+      <div class="stage-bar">
+        <p id="status" class="status" aria-live="polite"></p>
+      </div>
+      <canvas id="chart" class="chart" width="720" height="150" role="img"
+        aria-label="Chart of the largest angular separation between the reference pendulum and the others on a logarithmic scale over the last thirty seconds"></canvas>
+    </section>
+
+    <section class="controls" aria-label="Simulation controls">
+      <div class="control-row">
+        <label for="preset">Preset</label>
+        <select id="preset"></select>
+        <p id="preset-description" class="hint"></p>
+      </div>
+
+      <div class="control-row">
+        <label for="theta1">Upper angle <output id="theta1-value" for="theta1">120°</output></label>
+        <input id="theta1" type="range" min="-180" max="180" step="1" value="120" />
+      </div>
+
+      <div class="control-row">
+        <label for="theta2">Lower angle <output id="theta2-value" for="theta2">120°</output></label>
+        <input id="theta2" type="range" min="-180" max="180" step="1" value="120" />
+      </div>
+
+      <div class="control-row">
+        <label for="m1">Upper mass <output id="m1-value" for="m1">1.0</output></label>
+        <input id="m1" type="range" min="0.2" max="10" step="0.1" value="1" />
+      </div>
+
+      <div class="control-row">
+        <label for="m2">Lower mass <output id="m2-value" for="m2">1.0</output></label>
+        <input id="m2" type="range" min="0.2" max="10" step="0.1" value="1" />
+      </div>
+
+      <div class="control-row">
+        <label for="l1">Upper length <output id="l1-value" for="l1">1.0</output></label>
+        <input id="l1" type="range" min="0.3" max="2" step="0.05" value="1" />
+      </div>
+
+      <div class="control-row">
+        <label for="l2">Lower length <output id="l2-value" for="l2">1.0</output></label>
+        <input id="l2" type="range" min="0.3" max="2" step="0.05" value="1" />
+      </div>
+
+      <div class="control-row">
+        <label for="gravity">Gravity <output id="gravity-value" for="gravity">9.81</output></label>
+        <input id="gravity" type="range" min="0.5" max="25" step="0.01" value="9.81" />
+      </div>
+
+      <div class="control-row">
+        <label for="damping">Damping <output id="damping-value" for="damping">0.00</output></label>
+        <input id="damping" type="range" min="0" max="1" step="0.01" value="0" />
+      </div>
+
+      <div class="control-row">
+        <label for="count">Pendulums <output id="count-value" for="count">24</output></label>
+        <input id="count" type="range" min="1" max="64" step="1" value="24" />
+      </div>
+
+      <div class="control-row">
+        <label for="spread">Spread <output id="spread-value" for="spread">0.010°</output></label>
+        <input id="spread" type="range" min="-4" max="0" step="0.1" value="-2" />
+        <p class="hint">Total angular offset between the first and last pendulum, on a log scale.</p>
+      </div>
+
+      <div class="control-row">
+        <label for="speed">Speed <output id="speed-value" for="speed">1.0×</output></label>
+        <input id="speed" type="range" min="0.1" max="3" step="0.1" value="1" />
+      </div>
+
+      <div class="control-row checkbox-row">
+        <input id="trails" type="checkbox" checked />
+        <label for="trails">Trails</label>
+      </div>
+
+      <div class="control-row button-row">
+        <button id="pause" type="button" aria-pressed="false">Pause</button>
+        <button id="release" type="button">Release</button>
+      </div>
+
+      <p class="hint">
+        Changing an angle, mass, length, gravity, damping, count or spread re-releases the pendulums from rest.
+        Shortcuts: <kbd>Space</kbd> pause, <kbd>R</kbd> release again, <kbd>T</kbd> trails, <kbd>[</kbd>/<kbd>]</kbd> previous or next preset.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      The white pendulum is the reference. Every coloured one starts a fraction of a degree away from it.
+      For small swings they move as one; raise the bobs and the fan tears apart within seconds, and the chart
+      shows the separation climbing along a straight line on the log axis: exponential growth, the signature of chaos.
+    </p>
+  </footer>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
