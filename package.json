@@ -1,0 +1,27 @@
+{
+  "name": "pendulab",
+  "version": "0.1.0",
+  "description": "An interactive double-pendulum chaos lab: swing one pendulum, release a fan of nearly identical ones, and watch tiny differences grow into completely different motion.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "serve": "node scripts/serve.js"
+  },
+  "keywords": [
+    "double-pendulum",
+    "chaos",
+    "physics",
+    "simulation",
+    "runge-kutta",
+    "canvas",
+    "visualization",
+    "education"
+  ],
+  "license": "MIT",
+  "author": "Jiayi Fan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fushanbobfan/pendulab.git"
+  },
+  "private": false
+}
