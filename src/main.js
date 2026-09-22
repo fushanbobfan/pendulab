@@ -7,18 +7,22 @@ import {
   estimateLyapunov,
 } from './ensemble.js';
 import { PRESETS, DEFAULT_PRESET_ID, getPreset } from './presets.js';
-import { Trail, drawStage, drawChart } from './render.js';
+import { Trail, drawStage, drawChart, drawPhase } from './render.js';
+import { PHASE_PLANES, DEFAULT_PLANE_ID, getPlane, phasePoint, growExtent, initialExtent } from './phase.js';
 import { stageGeometry, pickBob, dragAngles } from './interaction.js';
 
 const $ = (id) => document.getElementById(id);
 const stage = $('stage');
 const chart = $('chart');
+const phase = $('phase');
 const ctx = stage.getContext('2d');
 const chartCtx = chart.getContext('2d');
+const phaseCtx = phase.getContext('2d');
 
 const DT = 1 / 240; // physics substep in seconds
 const MAX_FRAME = 0.1; // clamp long frames so a background tab does not explode
 const TRAIL_LENGTH = 500;
+const PHASE_LENGTH = 1200;
 const LOG_INTERVAL = 1 / 30;
 
 const controls = {
@@ -36,6 +40,7 @@ const controls = {
   spread: $('spread'),
   speed: $('speed'),
   trails: $('trails'),
+  phasePlane: $('phase-plane'),
   pause: $('pause'),
   release: $('release'),
   save: $('save'),
@@ -66,6 +71,9 @@ const sim = {
   states: [],
   params: null,
   trails: [],
+  phaseTrails: [],
+  plane: getPlane(DEFAULT_PLANE_ID),
+  extent: initialExtent(getPlane(DEFAULT_PLANE_ID)),
   log: new DivergenceLog(4000),
   time: 0,
   sinceLog: 0,
@@ -112,6 +120,7 @@ function release() {
   sim.params = readParams();
   sim.states = createEnsemble(base, count, readSpread());
   sim.trails = Array.from({ length: count }, () => new Trail(TRAIL_LENGTH));
+  resetPhase();
   sim.log.clear();
   sim.time = 0;
   sim.sinceLog = 0;
@@ -125,7 +134,29 @@ function recordTrails() {
   for (let i = 0; i < sim.states.length; i++) {
     const p = positions(sim.states[i], sim.params);
     sim.trails[i].push(p.x2, p.y2);
+    const q = phasePoint(sim.states[i], sim.plane);
+    sim.phaseTrails[i].push(q.x, q.y);
   }
+  sim.extent = growExtent(sim.extent, sim.plane, sim.states);
+}
+
+/** Forget the phase trajectories and let the velocity axis start small again. */
+function resetPhase() {
+  sim.phaseTrails = Array.from({ length: sim.states.length }, () => new Trail(PHASE_LENGTH));
+  sim.extent = initialExtent(sim.plane);
+}
+
+function setPlane(id) {
+  sim.plane = getPlane(id);
+  controls.phasePlane.value = sim.plane.id;
+  resetPhase();
+  recordTrails();
+  draw();
+}
+
+function stepPlane(delta) {
+  const idx = PHASE_PLANES.findIndex((p) => p.id === sim.plane.id);
+  setPlane(PHASE_PLANES[(idx + delta + PHASE_PLANES.length) % PHASE_PLANES.length].id);
 }
 
 function applyPreset(id) {
@@ -195,6 +226,7 @@ function updateStatus() {
 function draw() {
   drawStage(ctx, sim.states, sim.params, sim.trails, { showTrails: controls.trails.checked, pixelRatio });
   drawChart(chartCtx, sim.log, { pixelRatio });
+  drawPhase(phaseCtx, sim.states, sim.phaseTrails, sim.plane, sim.extent, { pixelRatio });
 }
 
 let statusTimer = 0;
@@ -288,6 +320,14 @@ function bind() {
     controls.preset.append(opt);
   }
   controls.preset.addEventListener('change', () => applyPreset(controls.preset.value));
+  for (const p of PHASE_PLANES) {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    controls.phasePlane.append(opt);
+  }
+  controls.phasePlane.value = sim.plane.id;
+  controls.phasePlane.addEventListener('change', () => setPlane(controls.phasePlane.value));
 
   const rerelease = ['theta1', 'theta2', 'm1', 'm2', 'l1', 'l2', 'gravity', 'damping', 'count', 'spread'];
   for (const key of rerelease) {
@@ -322,6 +362,10 @@ function bind() {
       case 'S':
         saveImage();
         break;
+      case 'p':
+      case 'P':
+        stepPlane(1);
+        break;
       case '[':
         stepPreset(-1);
         break;
@@ -336,12 +380,14 @@ function bind() {
 bind();
 fitCanvas(stage);
 fitCanvas(chart);
+fitCanvas(phase);
 applyPreset(DEFAULT_PRESET_ID);
 const observer = new ResizeObserver(() => {
-  const changed = fitCanvas(stage) | fitCanvas(chart);
+  const changed = fitCanvas(stage) | fitCanvas(chart) | fitCanvas(phase);
   if (changed && sim.params) draw();
 });
 observer.observe(stage);
 observer.observe(chart);
+observer.observe(phase);
 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setPaused(true);
 requestAnimationFrame(frame);

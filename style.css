@@ -92,9 +92,33 @@ canvas {
   cursor: grabbing;
 }
 
+/* The chart is 3:1 and the portrait square, so a 3:1 column split gives them the same height. */
+.charts {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 0.5rem;
+  align-items: start;
+}
+
 canvas.chart {
-  aspect-ratio: 24 / 5;
+  aspect-ratio: 3 / 1;
   background: #0a1020;
+}
+
+canvas.phase {
+  aspect-ratio: 1 / 1;
+  background: #0a1020;
+}
+
+@media (max-width: 640px) {
+  .charts {
+    grid-template-columns: 1fr;
+  }
+
+  canvas.chart {
+    aspect-ratio: 24 / 5;
+    height: auto;
+  }
 }
 
 .stage-bar {

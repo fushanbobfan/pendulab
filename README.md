@@ -36,6 +36,7 @@ static server works too.
 | Spread | Total angular offset between the first and last copy, from 0.0001° to 1° on a log slider |
 | Speed | Playback rate; the physics step stays fixed |
 | Trails | Show or hide the fading paths of the lower bobs |
+| Phase portrait | Which pair of state variables the square plot beside the chart shows |
 | Pause / Release | Freeze the motion, or drop everything again from the current pose |
 | Save image | Download the stage as a PNG |
 
@@ -44,7 +45,7 @@ swings the whole pendulum rigidly, the lower bob moves only the lower rod.
 The motion pauses while you drag and resumes when you let go.
 
 Keyboard: `Space` pause, `R` release again, `T` trails, `S` save image,
-`[` / `]` previous or next preset.
+`P` next phase plane, `[` / `]` previous or next preset.
 
 ### Presets
 
@@ -69,6 +70,17 @@ estimate of the largest Lyapunov exponent in inverse seconds, fitted only to
 samples that have left the floor and not yet saturated. For the gentle preset
 the line stays flat and `λ` sits near zero.
 
+## Reading the phase portrait
+
+Beside the chart, a square plot shows every pendulum's recent path through a
+slice of its state space: the lower angle against the lower angular velocity
+by default, or the upper pair, or the two angles against each other. Angles
+wrap at ±π, so a bob looping over the top jumps from one edge to the other;
+the velocity axis widens to fit the fastest motion seen since the last
+release. For the gentle preset the fan traces one tight, nested loop; for the
+chaotic presets the same fan of nearly identical starts smears across the
+whole square within seconds.
+
 ## How it works
 
 - `src/physics.js`: the Lagrangian equations of motion for two point masses on
@@ -78,8 +90,11 @@ the line stays flat and `λ` sits near zero.
   their separation, keeps a rolling divergence log and fits the Lyapunov
   estimate.
 - `src/presets.js`: the named configurations.
+- `src/phase.js`: the phase-portrait planes, wrapped coordinates, the
+  velocity axis that only grows, pixel mapping and wrap-aware line segments.
 - `src/render.js`: hue-spread member colours, fading trail buffers, the
-  fit-to-canvas scale and the log-axis chart geometry, plus the canvas calls.
+  fit-to-canvas scale and the log-axis chart geometry, plus the canvas calls
+  for the stage, the chart and the phase portrait.
 - `src/interaction.js`: bob picking and the drag-to-pose maths.
 - `src/main.js`: page glue.
 

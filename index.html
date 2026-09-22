@@ -21,8 +21,12 @@
       <div class="stage-bar">
         <p id="status" class="status" aria-live="polite"></p>
       </div>
-      <canvas id="chart" class="chart" width="720" height="150" role="img"
-        aria-label="Chart of the largest angular separation between the reference pendulum and the others on a logarithmic scale over the last thirty seconds"></canvas>
+      <div class="charts">
+        <canvas id="chart" class="chart" width="720" height="150" role="img"
+          aria-label="Chart of the largest angular separation between the reference pendulum and the others on a logarithmic scale over the last thirty seconds"></canvas>
+        <canvas id="phase" class="phase" width="240" height="240" role="img"
+          aria-label="Phase portrait: each pendulum's recent trajectory in the chosen pair of state variables"></canvas>
+      </div>
     </section>
 
     <section class="controls" aria-label="Simulation controls">
@@ -93,6 +97,12 @@
         <label for="trails">Trails</label>
       </div>
 
+      <div class="control-row">
+        <label for="phase-plane">Phase portrait</label>
+        <select id="phase-plane"></select>
+        <p class="hint">Which pair of state variables the square plot beside the chart shows.</p>
+      </div>
+
       <div class="control-row button-row">
         <button id="pause" type="button" aria-pressed="false">Pause</button>
         <button id="release" type="button">Release</button>
@@ -103,7 +113,7 @@
 
       <p class="hint">
         Drag either white bob to pose the pendulum. Changing an angle, mass, length, gravity, damping, count or spread re-releases the pendulums from rest.
-        Shortcuts: <kbd>Space</kbd> pause, <kbd>R</kbd> release again, <kbd>T</kbd> trails, <kbd>S</kbd> save image, <kbd>[</kbd>/<kbd>]</kbd> previous or next preset.
+        Shortcuts: <kbd>Space</kbd> pause, <kbd>R</kbd> release again, <kbd>T</kbd> trails, <kbd>S</kbd> save image, <kbd>P</kbd> next phase plane, <kbd>[</kbd>/<kbd>]</kbd> previous or next preset.
       </p>
     </section>
   </main>
