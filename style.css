@@ -92,9 +92,34 @@ canvas {
   cursor: grabbing;
 }
 
+.charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 22%);
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
 canvas.chart {
-  aspect-ratio: 24 / 5;
+  aspect-ratio: auto;
+  height: 100%;
+  min-height: 150px;
   background: #0a1020;
+}
+
+canvas.phase {
+  aspect-ratio: 1 / 1;
+  background: #0a1020;
+}
+
+@media (max-width: 640px) {
+  .charts {
+    grid-template-columns: 1fr;
+  }
+
+  canvas.chart {
+    aspect-ratio: 24 / 5;
+    height: auto;
+  }
 }
 
 .stage-bar {
