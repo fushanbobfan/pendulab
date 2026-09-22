@@ -3,6 +3,7 @@
 // canvas calls so they can be unit tested.
 
 import { positions } from './physics.js';
+import { phaseGeometry, phasePoint, phaseSegments } from './phase.js';
 
 /** Hue-spread colour for member i of an ensemble; the reference is white. */
 export function memberColor(i, count, alpha = 1) {
@@ -182,4 +183,83 @@ export function drawChart(ctx, log, options = {}) {
   ctx.moveTo(pad.left + points[0].x, pad.top + points[0].y);
   for (let i = 1; i < points.length; i++) ctx.lineTo(pad.left + points[i].x, pad.top + points[i].y);
   ctx.stroke();
+}
+
+/**
+ * Draw the phase portrait: every member's recent trajectory in the chosen
+ * plane as a fading line in its own colour, with a dot at the current state.
+ */
+export function drawPhase(ctx, states, trails, plane, extent, options = {}) {
+  const { pixelRatio = 1 } = options;
+  const width = ctx.canvas.width / pixelRatio;
+  const height = ctx.canvas.height / pixelRatio;
+  const pad = { left: 30, right: 10, top: 10, bottom: 24 };
+  const w = width - pad.left - pad.right;
+  const h = height - pad.top - pad.bottom;
+  const g = phaseGeometry(w, h, extent);
+  const px = (x) => pad.left + g.toX(x);
+  const py = (y) => pad.top + g.toY(y);
+
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+
+  // Axes through the origin and quarter-turn gridlines on angle axes.
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  const xTicks = plane.xAngle ? [-Math.PI / 2, 0, Math.PI / 2] : [0];
+  const yTicks = plane.yAngle ? [-Math.PI / 2, 0, Math.PI / 2] : [0];
+  for (const x of xTicks) {
+    ctx.beginPath();
+    ctx.moveTo(px(x), pad.top);
+    ctx.lineTo(px(x), pad.top + h);
+    ctx.stroke();
+  }
+  for (const y of yTicks) {
+    ctx.beginPath();
+    ctx.moveTo(pad.left, py(y));
+    ctx.lineTo(pad.left + w, py(y));
+    ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.strokeRect(pad.left, pad.top, w, h);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '11px system-ui, sans-serif';
+  ctx.textBaseline = 'bottom';
+  ctx.textAlign = 'center';
+  const xRange = plane.xAngle ? '−π … π' : `±${extent.x.toFixed(1)} rad/s`;
+  ctx.fillText(`${plane.xLabel}  ${xRange}`, pad.left + w / 2, height - 4);
+  ctx.save();
+  ctx.translate(10, pad.top + h / 2);
+  ctx.rotate(-Math.PI / 2);
+  const yRange = plane.yAngle ? '−π … π' : `±${extent.y.toFixed(1)} rad/s`;
+  ctx.fillText(`${plane.yLabel}  ${yRange}`, 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(pad.left, pad.top, w, h);
+  ctx.clip();
+
+  for (let i = trails.length - 1; i >= 0; i--) {
+    const segments = phaseSegments(trails[i], plane);
+    if (segments.length === 0) continue;
+    ctx.lineWidth = i === 0 ? 1.4 : 1;
+    ctx.strokeStyle = memberColor(i, states.length, i === 0 ? 0.8 : 0.45);
+    for (const seg of segments) {
+      ctx.beginPath();
+      ctx.moveTo(px(seg[0].x), py(seg[0].y));
+      for (let k = 1; k < seg.length; k++) ctx.lineTo(px(seg[k].x), py(seg[k].y));
+      ctx.stroke();
+    }
+  }
+
+  for (let i = states.length - 1; i >= 0; i--) {
+    const p = phasePoint(states[i], plane);
+    ctx.fillStyle = memberColor(i, states.length, 1);
+    ctx.beginPath();
+    ctx.arc(px(p.x), py(p.y), i === 0 ? 3.5 : 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 }
