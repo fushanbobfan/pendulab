@@ -92,17 +92,16 @@ canvas {
   cursor: grabbing;
 }
 
+/* The chart is 3:1 and the portrait square, so a 3:1 column split gives them the same height. */
 .charts {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(150px, 22%);
+  grid-template-columns: 3fr 1fr;
   gap: 0.5rem;
-  align-items: stretch;
+  align-items: start;
 }
 
 canvas.chart {
-  aspect-ratio: auto;
-  height: 100%;
-  min-height: 150px;
+  aspect-ratio: 3 / 1;
   background: #0a1020;
 }
 
